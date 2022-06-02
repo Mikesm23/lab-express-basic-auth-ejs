@@ -39,7 +39,16 @@ router.post("/sign-up", (req, res, next) => {
     .then( () => {
       res.redirect('/login')
     })
-    .catch(error => next(error))
+    .catch(error => {
+      if (error.code === 11000) {
+        res.status(500).render('sign-up', {
+           errorMessage: 'Username or Email already taken.'
+        });
+      } else {
+        next(error);
+      }
+    });
+    //.catch(error => next(error))
 });
 
 /*Get to Login*/
@@ -73,15 +82,7 @@ router.post('/login', (req, res, next) => {
         res.render('login', { errorMessage: 'Incorrect password.' });
       }
     })
-    .catch(error => {
-      if (error.code === 11000) {
-        res.status(500).render('sign-up', {
-           errorMessage: 'Username already taken.'
-        });
-      } else {
-        next(error);
-      }
-    });
+    .catch(error => next(error))
 });
 
 router.get("/profile", isLoggedIn, (req, res, next) => {
