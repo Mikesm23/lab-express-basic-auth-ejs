@@ -4,12 +4,17 @@
     <br />
     <label>
       Email
-      <input type="email" name="email" placeholder="rockstar@ironhack.com" />
+      <input
+        type="email"
+        name="email"
+        placeholder="rockstar@ironhack.com"
+        required
+      />
     </label>
     <br />
     <label>
       Password
-      <input type="password" name="password" placeholder="********" />
+      <input type="password" name="password" placeholder="********" required />
     </label>
     <br />
     <br />
@@ -17,6 +22,11 @@
 
     <%#!-- error message will be added here --%>
   </form>
+  <div>
+    <% if (typeof errorMessage !== 'undefined') {%>
+    <p><%= errorMessage%></p>
+    <%} %>
+  </div>
+  <br />
+  <a href="/">Homepage</a>
 </div>
-<br />
-<a href="/">Homepage</a>

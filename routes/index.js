@@ -5,6 +5,9 @@ const saltRounds = 10
 const session = require("express-session")
 const mongo = require("connect-mongo")
 
+//require auth middleware
+const { isLoggedIn, isLoggedOut } = require('../middleware/route-guard.js');
+
 /* GET home page */
 router.get("/", (req, res, next) => {
   res.render("index");
@@ -34,7 +37,7 @@ router.post("/sign-up", (req, res, next) => {
 
     })
     .then( () => {
-      res.redirect('user-profile')
+      res.redirect('/login')
     })
     .catch(error => next(error))
 });
@@ -45,6 +48,7 @@ router.get("/login", (req, res, next) => {
 });
 
 router.post('/login', (req, res, next) => {
+  console.log('SESSION =====> ', req.session);
   const { email, password } = req.body;
  
  if (email === '' || password === '') {
@@ -53,32 +57,49 @@ router.post('/login', (req, res, next) => {
     });
     return;
   }
-  User.findOne({ email }) // <== check if there's user with the provided email
+  User.findOne({ email })
     .then(user => {
-      // <== "user" here is just a placeholder and represents the response from the DB
       if (!user) {
-        // <== if there's no user with provided email, notify the user who is trying to login
         res.render('login', {
           errorMessage: 'Email is not registered. Try with other email.'
         });
         return;
       }
- 
-      // if there's a user, compare provided password
-      // with the hashed password saved in the database
       else if (bcryptjs.compareSync(password, user.password)) {
-        // if the two passwords match, render the user-profile.ejs and
-        //                   pass the user object to this view
-        //                                 |
-        //                                 V
-        res.render('user-profile', { user });
+        console.log(user, "this is my user")
+        req.session.currentUser = user
+        res.redirect('/profile');
       } else {
-        // if the two passwords DON'T match, render the login form again
-        // and send the error message to the user
         res.render('login', { errorMessage: 'Incorrect password.' });
       }
     })
-    .catch(error => next(error));
+    .catch(error => {
+      if (error.code === 11000) {
+        res.status(500).render('sign-up', {
+           errorMessage: 'Username already taken.'
+        });
+      } else {
+        next(error);
+      }
+    });
 });
 
+router.get("/profile", isLoggedIn, (req, res, next) => {
+  res.render("user-profile", { user: req.session.currentUser });
+});
+
+/// ------  GET CAT VIEW ----- \\\\\
+router.get("/main", isLoggedIn, (req, res, next) => {
+  res.render("cat");
+});
+
+/// ------  GET GIF VIEW ----- \\\\\
+router.get("/private", isLoggedIn, (req, res, next) => {
+  res.render("gif");
+})
+
 module.exports = router;
+
+// else if (user === username) { 
+ // res.render('login', { errorMessage: "The username can't be repeated" });
+//}
